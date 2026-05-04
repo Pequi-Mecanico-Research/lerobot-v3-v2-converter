@@ -3,9 +3,11 @@
 Wraps the upstream NVIDIA Isaac-GR00T converter (vendored as ``_nvidia_convert``)
 with three additions:
 
-- A compatibility shim for ``lerobot`` >= 0.5.x, which moved
-  ``load_info`` / ``load_tasks`` / ``write_info`` from ``datasets/utils`` to
-  ``datasets/io_utils``. Without the shim, the upstream import fails on 0.5.x.
+- A compatibility shim for ``lerobot`` 0.5.x. The upstream code imports
+  several symbols from ``lerobot.datasets.utils`` that were moved to
+  ``lerobot.datasets.io_utils`` in 0.5.x. The shim mirrors any missing
+  symbols from ``io_utils`` back onto ``utils`` before the upstream
+  module is imported, so the same code runs on both 0.4.x and 0.5.x.
 - Preservation of ``meta/modality.json`` (an extra metadata file used by
   GR00T) across the conversion. The upstream converter does not copy it.
 - Explicit ``--input`` / ``--output`` arguments. When ``--output`` is given,
@@ -24,8 +26,8 @@ import lerobot.datasets.utils as _utils
 try:
     import lerobot.datasets.io_utils as _io_utils
 
-    for _sym in ("load_info", "load_tasks", "write_info"):
-        if not hasattr(_utils, _sym) and hasattr(_io_utils, _sym):
+    for _sym in dir(_io_utils):
+        if not _sym.startswith("_") and not hasattr(_utils, _sym):
             setattr(_utils, _sym, getattr(_io_utils, _sym))
 except ImportError:
     pass

@@ -5,27 +5,6 @@ Two-way LeRobot dataset format converter between codebase **v2.1** and
 (e.g. NVIDIA GR00T) still consume v2.1, while `lerobot record` on
 recent releases writes v3.0.
 
-## Features
-
-- **Both directions** in a single repo: `v3_to_v2/` and `v2_to_v3/`.
-- **`lerobot` 0.5.x compatibility for v3 → v2**. The upstream NVIDIA
-  Isaac-GR00T converter is written against `lerobot` 0.4.x. On 0.5.x
-  it fails at import because `load_info` / `load_tasks` / `write_info`
-  moved from `datasets/utils.py` to `datasets/io_utils.py`. This
-  wrapper applies a small module-level shim that restores those names,
-  so the upstream code works unchanged on both 0.4.x and 0.5.x.
-- **`modality.json` is preserved**. GR00T datasets carry an extra
-  `meta/modality.json` describing state / action / video keys. Neither
-  upstream converter copies it through. This wrapper backs it up
-  before and restores it after the conversion, in both directions.
-- **Explicit `--input` / `--output`**. Upstream converters run in
-  place. Here, when `--output` is given, the input directory is left
-  untouched.
-- **Vendored, no extra clone**. The actual conversion logic is
-  vendored into this repo with the original Apache 2.0 headers
-  preserved. You only need to clone this repo. See `NOTICE` for
-  upstream sources, commits, and versions.
-
 ## Install
 
 ```bash
@@ -34,6 +13,8 @@ pip install -r requirements.txt
 
 `ffmpeg` must be available on `PATH`. Both converters call it to
 re-segment videos.
+
+Compatible with `lerobot` 0.4.x and 0.5.x.
 
 ## Usage
 
@@ -69,6 +50,28 @@ python v2_to_v3/convert.py --input /path/to/dataset
 default is the opposite. Pass `--push-to-hub` explicitly to upload the
 converted dataset to the Hugging Face Hub (requires the input directory
 name to match a Hub `repo_id` and an authenticated session).
+
+## Features
+
+- **Both directions** in a single repo: `v3_to_v2/` and `v2_to_v3/`.
+- **`lerobot` 0.4.x and 0.5.x compatibility, both directions**. Both
+  upstream converters import `load_info` / `load_tasks` / `write_info`
+  from `lerobot.datasets.utils`. In 0.5.x those symbols moved to
+  `lerobot.datasets.io_utils`, breaking import. Each wrapper applies a
+  small module-level shim that mirrors any missing symbol from
+  `io_utils` back onto `utils`, so the same upstream code runs on both
+  versions unchanged.
+- **`modality.json` is preserved**. GR00T datasets carry an extra
+  `meta/modality.json` describing state / action / video keys. Neither
+  upstream converter copies it through. This wrapper backs it up
+  before and restores it after the conversion, in both directions.
+- **Explicit `--input` / `--output`**. Upstream converters run in
+  place. Here, when `--output` is given, the input directory is left
+  untouched.
+- **Vendored, no extra clone**. The actual conversion logic is
+  vendored into this repo with the original Apache 2.0 headers
+  preserved. You only need to clone this repo. See `NOTICE` for
+  upstream sources, commits, and versions.
 
 ## Layout
 
