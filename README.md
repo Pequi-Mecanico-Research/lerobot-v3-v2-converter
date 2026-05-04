@@ -89,6 +89,10 @@ checked property:
 | `meta/tasks.parquet`                   | byte-equal  |
 | `meta/modality.json`                   | byte-equal  |
 
+A public 90-episode SO-ARM101 wrist-only dataset shipped in LeRobot v3.0
+format (and convertible to v2.1 with this tool) is available at
+[`dongyoonkim/so101-eraser-90ep-wrist`](https://huggingface.co/datasets/dongyoonkim/so101-eraser-90ep-wrist).
+
 ## Layout
 
 ```
