@@ -73,6 +73,22 @@ name to match a Hub `repo_id` and an authenticated session).
   preserved. You only need to clone this repo. See `NOTICE` for
   upstream sources, commits, and versions.
 
+## Verified
+
+Round-trip (`v3.0 → v2.1 → v3.0`) on a 30-episode / ~15k-frame
+single-camera SO-ARM101 dataset, run on **`lerobot` 0.4.1 and 0.5.2**.
+The final v3.0 dataset matches the original v3.0 input on every
+checked property:
+
+| check                                  | result      |
+|----------------------------------------|-------------|
+| `info.json` codebase / counts / config | identical   |
+| `data/*.parquet` total rows            | identical   |
+| video total frame count (`ffprobe`)    | identical   |
+| `meta/episodes/*.parquet` total rows   | identical   |
+| `meta/tasks.parquet`                   | byte-equal  |
+| `meta/modality.json`                   | byte-equal  |
+
 ## Layout
 
 ```
