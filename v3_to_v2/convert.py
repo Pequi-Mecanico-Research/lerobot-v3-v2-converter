@@ -12,14 +12,26 @@ with three additions:
   GR00T) across the conversion. The upstream converter does not copy it.
 - Explicit ``--input`` / ``--output`` arguments. When ``--output`` is given,
   the input directory is left untouched.
+- Optional ``--push-to-hub REPO_ID``. When given, the converted v2.1 dataset
+  is uploaded to the Hugging Face Hub after conversion, using raw
+  ``HfApi`` calls (not ``LeRobotDataset.push_to_hub``). Every ``lerobot``
+  release on PyPI (0.4.0 through at least 0.6.1) hardcodes
+  ``CODEBASE_VERSION = "v3.0"`` and refuses to even load a v2.1 local
+  dataset (``BackwardCompatibilityError``), so ``LeRobotDataset.push_to_hub``
+  cannot be used here regardless of which ``lerobot`` version is installed.
+  Uploading the folder directly and creating the ``v2.1`` tag ourselves
+  sidesteps that check.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import sys
 from pathlib import Path
+
+from huggingface_hub import HfApi
 
 import lerobot.datasets.utils as _utils
 
@@ -61,7 +73,36 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Overwrite the output directory if it already exists.",
     )
+    parser.add_argument(
+        "--push-to-hub",
+        dest="push_to_hub",
+        default=None,
+        metavar="REPO_ID",
+        help=(
+            "If set, upload the converted v2.1 dataset to this Hugging Face Hub "
+            "dataset repo id (e.g. 'username/my-dataset') after conversion."
+        ),
+    )
     return parser.parse_args()
+
+
+def push_dataset_to_hub(root: Path, repo_id: str) -> None:
+    """Upload the converted v2.1 dataset at ``root`` to the Hub and tag it.
+
+    Deliberately does not use ``LeRobotDataset.push_to_hub``: that method
+    first instantiates a ``LeRobotDataset``, which raises
+    ``BackwardCompatibilityError`` for a v2.1 local dataset on every
+    ``lerobot`` release currently on PyPI (their ``CODEBASE_VERSION`` is
+    already ``v3.0``). Uploading the folder and creating the version tag
+    directly via ``HfApi`` avoids that check and works regardless of the
+    installed ``lerobot`` version.
+    """
+    version_tag = json.loads((root / "meta" / "info.json").read_text())["codebase_version"]
+
+    api = HfApi()
+    api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+    api.upload_folder(repo_id=repo_id, repo_type="dataset", folder_path=str(root))
+    api.create_tag(repo_id, tag=version_tag, repo_type="dataset")
 
 
 def main() -> None:
@@ -108,6 +149,11 @@ def main() -> None:
     print("Conversion complete.")
     print(f"  v2.1 output : {target}")
     print(f"  v3.0 backup : {backup}")
+
+    if args.push_to_hub is not None:
+        print()
+        print(f"Uploading dataset to the Hugging Face Hub: {args.push_to_hub}")
+        push_dataset_to_hub(target, args.push_to_hub)
 
 
 if __name__ == "__main__":
