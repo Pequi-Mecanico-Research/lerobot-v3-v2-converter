@@ -1,1 +1,6 @@
-lerobot>=0.4.1
+# Verified on 0.4.1, 0.5.2 and 0.6.1; cap to avoid breaking API changes (e.g. the 0.6 DatasetInfo dataclass).
+lerobot>=0.4.1,<0.7
+
+# NOTE: the v3 -> v2 converter also needs the system `ffmpeg` binary on PATH
+# (e.g. `sudo apt install ffmpeg`). It cannot be installed via pip: the PyPI
+# "ffmpeg" package is only a Python stub and does not provide the executable.
